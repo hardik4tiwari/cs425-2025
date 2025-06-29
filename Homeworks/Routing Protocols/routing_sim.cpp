@@ -27,7 +27,52 @@ void simulateDVR(const vector<vector<int>>& graph) {
     vector<vector<int>> dist = graph;
     vector<vector<int>> nextHop(n, vector<int>(n));
 
-    //TODO: Complete this
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            dist[i][j] = graph[i][j];
+            if (i != j) {
+                if (graph[i][j] != INF) {
+                    nextHop[i][j] = j;
+                } else {
+                    nextHop[i][j] = -1;
+                }
+            } else {
+                dist[i][j] = 0;
+                nextHop[i][j] = -1;
+            }
+        }
+    }
+    //exchanging the routing tables and updating the tables 
+    bool updated;
+    do {
+        updated = false;
+        vector<vector<int>> prev_dist = dist;
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if (i == j) continue;
+
+                int min_cost = prev_dist[i][j];
+                int min_hop = nextHop[i][j];
+
+                for (int k = 0; k < n; ++k) {
+                    if (k == i || prev_dist[i][k] == INF) continue;
+
+                    int possible_cost = prev_dist[i][k] + prev_dist[k][j];
+                    if (possible_cost < min_cost) {
+                        min_cost = possible_cost;
+                        min_hop = k;
+                    }
+                }
+
+                if (min_cost < dist[i][j]) {
+                    dist[i][j] = min_cost;
+                    nextHop[i][j] = min_hop;
+                    updated = true;
+                }
+            }
+        }
+    } while (updated);
 
     cout << "--- DVR Final Tables ---\n";
     for (int i = 0; i < n; ++i) printDVRTable(i, dist, nextHop);
@@ -55,7 +100,28 @@ void simulateLSR(const vector<vector<int>>& graph) {
         vector<bool> visited(n, false);
         dist[src] = 0;
         
-         //TODO: Complete this
+        //applying dijakstra's algorithm
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        pq.push({0, src});//intializing priority queque for distance
+
+        while (!pq.empty()) {
+            int u = pq.top().second;
+            int current_dist = pq.top().first;
+            pq.pop();
+
+            if (visited[u]) continue;
+            visited[u] = true;
+
+            for (int v = 0; v < n; ++v) {
+                if (u != v && graph[u][v] != INF) {
+                    if (!visited[v] && dist[v] > current_dist + graph[u][v]) {
+                        dist[v] = current_dist + graph[u][v];
+                        prev[v] = u;
+                        pq.push({dist[v], v});//updating with new reduced distance in the priority queue
+                    }
+                }
+            }
+        }
         
         printLSRTable(src, dist, prev);
     }
